@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="YearVacationMngDAO">
+
+
+	<select id="selectListYearVacationMng" parameterType="egovframework.omcst.vacation.year.service.YearVacationVO" resultType="egovframework.omcst.vacation.year.service.YearVacationVO">
+		SELECT	/* YearVacationMngDAO.selectListYearVacationMng	*/ 
+			BASE_T.*
+		FROM
+			(SELECT 
+					A.VC_ID
+					, A.EMPL_NO
+					, A.VC_TYPE
+					, DATE_FORMAT(A.VC_BGNDE,'%Y-%m-%d') AS VC_BGNDE
+					, DATE_FORMAT(A.VC_ENDDE,'%Y-%m-%d') AS VC_ENDDE
+					, A.VC_DAY_CNT
+					, A.VC_STATUS
+					, A.DEL_YN
+					, A.FRST_REGISTER_ID
+					, DATE_FORMAT(A.FRST_REGIST_PNTTM,'%Y-%m-%d') AS FRST_REGIST_PNTTM
+					, A.LAST_UPDUSR_ID
+					, DATE_FORMAT(A.LAST_UPDT_PNTTM,'%Y-%m-%d') AS LAST_UPDT_PNTTM			
+					, (SELECT USER_NM FROM LETTNEMPLYRINFO WHERE EMPLYR_ID = A.EMPL_NO) AS EMPL_NM
+					, (SELECT USER_NM FROM LETTNEMPLYRINFO WHERE EMPLYR_ID = A.LAST_UPDUSR_ID) AS LAST_UPDUSR_NM			
+					, C1.CODE_NM AS VC_STATUS_NM 
+					, C2.CODE_NM AS VC_TYPE_NM
+			FROM OM_VACATION A		
+					LEFT OUTER JOIN LETTCCMMNDETAILCODE C1 ON C1.CODE_ID = 'COM030' AND A.VC_STATUS = C1.CODE
+					LEFT OUTER JOIN LETTCCMMNDETAILCODE C2 ON C2.CODE_ID = 'COM031' AND A.VC_TYPE = C2.CODE
+			WHERE 
+				A.DEL_YN = 'N'
+				<if test=" searchVcStatus != null and searchVcStatus != '' ">
+					AND A.VC_STATUS = #{searchVcStatus}
+				</if> 
+				<if test=" searchBgnde != null and searchBgnde != '' ">
+					<![CDATA[ AND A.VC_BGNDE >= REPLACE(#{searchBgnde}, '-', '') ]]>
+				</if>
+				<if test=" searchEndde != null and searchEndde != '' ">
+					<![CDATA[ AND A.VC_ENDDE <= REPLACE(#{searchEndde}, '-', '') ]]>
+				</if> 
+			) BASE_T
+		<where>
+			<if test=" searchEmplNm != null and searchEmplNm != '' ">
+				EMPL_NM LIKE  CONCAT('%', #{searchEmplNm} ,'%')	
+			</if>
+		</where>		
+		ORDER BY
+			BASE_T.FRST_REGIST_PNTTM DESC	
+		LIMIT #{recordCountPerPage} OFFSET #{firstIndex}
+	</select>
+	
+	
+	<update id="updateSignYearVacation">
+		UPDATE OM_VACATION	/* YearVacationMngDAO.updateSignYearVacation */ 
+			SET VC_STATUS = #{vcStatus}
+		WHERE 
+			VC_ID = #{vcId}
+	</update>
+	
+	<select id="selectListInitVacationInfo" parameterType="egovframework.omcst.vacation.year.service.YearVacationVO" resultType="egovframework.omcst.vacation.year.service.YearVacationVO">
+		SELECT /* YearVacationMngDAO.selectListInitVacationInfo	*/ 
+		    X.EMPLYR_ID emplNo,
+		    X.USER_NM emplNm,
+		    X.ORGNZT_ID orgnztId,
+		    IFNULL(X.MV_DAY, 0) totaldaycnt,
+		    X.YEAR year,
+		    X.JOIN_DATE joinDate,
+		    IFNULL(X.USE_DAY_CNT, 0) usedaycnt,
+		    IFNULL(X.MV_DAY, 0) - IFNULL(X.USE_DAY_CNT, 0) nowdaycnt,
+		    (SELECT 
+		            ORGNZT_NM
+		        FROM
+		            LETTNORGNZTINFO C
+		        WHERE
+		            C.ORGNZT_ID = X.ORGNZT_ID) orgnztNm,
+		    IF(X.YEAR IS NULL, 'N', 'Y') regYn
+		FROM
+		    (SELECT 
+		        A.EMPLYR_ID,
+		            A.USER_NM,
+		            A.ORGNZT_ID,
+		            B.MV_DAY,
+		            B.YEAR,
+		            DATE_FORMAT(A.JOIN_DATE, '%Y%m%d') JOIN_DATE,
+		            C.USE_DAY_CNT
+		    FROM
+		        LETTNEMPLYRINFO A
+		    LEFT OUTER JOIN OM_YEARMEMVACATION B ON A.EMPLYR_ID = B.EMPL_NO
+		        AND B.YEAR = YEAR(NOW())
+		    LEFT OUTER JOIN (SELECT 
+		        EMPL_NO, SUM(VC_DAY_CNT) USE_DAY_CNT, FRST_REGIST_PNTTM
+		    FROM
+		        OM_VACATION
+		    GROUP BY EMPL_NO , YEAR(FRST_REGIST_PNTTM)) C ON A.EMPLYR_ID = C.EMPL_NO
+		        AND YEAR(C.FRST_REGIST_PNTTM) = YEAR(NOW())) X
+		WHERE 1 = 1
+		<if test=" searchVcStatus != null and searchVcStatus != '' ">
+				AND X.ORGNZT_ID = #{searchVcStatus}
+		</if>
+		<if test=" searchEmplNm != null and searchEmplNm != '' ">
+				AND X.USER_NM LIKE  CONCAT('%', #{searchEmplNm} ,'%')	
+		</if>
+		<if test=" searchBgnde != null and searchBgnde != '' ">
+				<![CDATA[ AND X.JOIN_DATE >= REPLACE(#{searchBgnde}, '-', '') ]]>
+		</if>
+		<if test=" searchEndde != null and searchEndde != '' ">
+				<![CDATA[ AND X.JOIN_DATE <= REPLACE(#{searchEndde}, '-', '') ]]>
+		</if> 
+		ORDER BY regYn DESC , emplNo ASC
+		LIMIT #{recordCountPerPage} OFFSET #{firstIndex}
+	</select>
+	
+	<select id="selectListInitVacationInfoTotCnt" parameterType="egovframework.omcst.vacation.year.service.YearVacationVO" resultType="int">
+		SELECT			 /* YearVacationMngDAO.selectListInitVacationInfoTotCnt	*/ 
+		    COUNT(*) totcnt
+		FROM(    
+		    SELECT 
+		        A.EMPLYR_ID,
+		            A.USER_NM,
+		            A.ORGNZT_ID,
+		            B.MV_DAY,
+		            B.YEAR,
+		            DATE_FORMAT(A.JOIN_DATE, '%Y%m%d') JOIN_DATE,
+		            C.USE_DAY_CNT
+		    FROM
+		        LETTNEMPLYRINFO A
+		    LEFT OUTER JOIN OM_YEARMEMVACATION B ON A.EMPLYR_ID = B.EMPL_NO
+		        AND B.YEAR = YEAR(NOW())
+		    LEFT OUTER JOIN (SELECT 
+		        EMPL_NO, SUM(VC_DAY_CNT) USE_DAY_CNT, FRST_REGIST_PNTTM
+		    FROM
+		        OM_VACATION
+		    GROUP BY EMPL_NO , YEAR(FRST_REGIST_PNTTM)) C ON A.EMPLYR_ID = C.EMPL_NO
+		        AND YEAR(C.FRST_REGIST_PNTTM) = YEAR(NOW())
+		   )X
+		   WHERE 1 = 1
+			<if test=" searchVcStatus != null and searchVcStatus != '' ">
+				AND X.ORGNZT_ID = #{searchVcStatus}
+			</if>
+			<if test=" searchEmplNm != null and searchEmplNm != '' ">
+				AND X.USER_NM LIKE  CONCAT('%', #{searchEmplNm} ,'%')	
+			</if>
+			<if test=" searchBgnde != null and searchBgnde != '' ">
+				<![CDATA[ AND X.JOIN_DATE >= REPLACE(#{searchBgnde}, '-', '') ]]>
+			</if>
+			<if test=" searchEndde != null and searchEndde != '' ">
+				<![CDATA[ AND X.JOIN_DATE <= REPLACE(#{searchEndde}, '-', '') ]]>
+			</if> 
+	</select>
+	
+	<update id="vacationUpdate">
+		UPDATE OM_YEARMEMVACATION	/* YearVacationMngDAO.vacationUpdate */ 
+			SET MV_DAY = #{mvDay}
+		WHERE 
+			EMPL_NO = #{emplNo} AND YEAR = YEAR(NOW())
+	</update>
+	
+	<select id="selectListYearVacationMngCnt" parameterType="egovframework.omcst.vacation.year.service.YearVacationVO" resultType="java.lang.Integer">
+	SELECT COUNT(*) FROM /* YearVacationMngDAO.selectListYearVacationMngCnt */
+	(SELECT	 
+			BASE_T.*
+		FROM
+			(SELECT 
+					A.VC_ID
+					, A.EMPL_NO
+					, A.VC_TYPE
+					, DATE_FORMAT(A.VC_BGNDE,'%Y-%m-%d') AS VC_BGNDE
+					, DATE_FORMAT(A.VC_ENDDE,'%Y-%m-%d') AS VC_ENDDE
+					, A.VC_DAY_CNT
+					, A.VC_STATUS
+					, A.DEL_YN
+					, A.FRST_REGISTER_ID
+					, DATE_FORMAT(A.FRST_REGIST_PNTTM,'%Y-%m-%d') AS FRST_REGIST_PNTTM
+					, A.LAST_UPDUSR_ID
+					, DATE_FORMAT(A.LAST_UPDT_PNTTM,'%Y-%m-%d') AS LAST_UPDT_PNTTM			
+					, (SELECT USER_NM FROM LETTNEMPLYRINFO WHERE EMPLYR_ID = A.EMPL_NO) AS EMPL_NM
+					, (SELECT USER_NM FROM LETTNEMPLYRINFO WHERE EMPLYR_ID = A.LAST_UPDUSR_ID) AS LAST_UPDUSR_NM			
+					, C1.CODE_NM AS VC_STATUS_NM 
+					, C2.CODE_NM AS VC_TYPE_NM
+			FROM OM_VACATION A		
+					LEFT OUTER JOIN LETTCCMMNDETAILCODE C1 ON C1.CODE_ID = 'COM030' AND A.VC_STATUS = C1.CODE
+					LEFT OUTER JOIN LETTCCMMNDETAILCODE C2 ON C2.CODE_ID = 'COM031' AND A.VC_TYPE = C2.CODE
+			WHERE 
+				A.DEL_YN = 'N'
+				<if test=" searchVcStatus != null and searchVcStatus != '' ">
+					AND A.VC_STATUS = #{searchVcStatus}
+				</if> 
+				<if test=" searchBgnde != null and searchBgnde != '' ">
+					<![CDATA[ AND A.VC_BGNDE >= REPLACE(#{searchBgnde}, '-', '') ]]>
+				</if>
+				<if test=" searchEndde != null and searchEndde != '' ">
+					<![CDATA[ AND A.VC_ENDDE <= REPLACE(#{searchEndde}, '-', '') ]]>
+				</if> 
+			) BASE_T
+		<where>
+			<if test=" searchEmplNm != null and searchEmplNm != '' ">
+				EMPL_NM LIKE  CONCAT('%', #{searchEmplNm} ,'%')	
+			</if>
+		</where>
+		)TOT
+	</select>
+	
+	<select id="selectCurrentVacationSituation" parameterType="egovframework.omcst.vacation.year.service.YearVacationVO" resultType="egovframework.omcst.vacation.year.service.YearVacationVO">
+		SELECT 
+		    MAX(CASE
+		        WHEN VC_STATUS = 'VC02' THEN CNT
+		        ELSE 0
+		    END) AS APPLY,
+		    MAX(CASE
+		        WHEN VC_STATUS = 'VC03' THEN CNT
+		        ELSE 0
+		    END) AS PASS,
+		    MAX(CASE
+		        WHEN VC_STATUS = 'VC04' THEN CNT
+		        ELSE 0
+		    END) AS DENY
+		FROM
+		    (SELECT 
+		        VC_STATUS, COUNT(VC_STATUS) AS CNT
+		    FROM
+		        (SELECT *,
+		            (SELECT 
+		                    USER_NM
+		                FROM
+		                    LETTNEMPLYRINFO
+		                WHERE
+		                    EMPLYR_ID = A.EMPL_NO) AS EMPL_NM
+		    FROM
+		        OM_VACATION A) B
+		    WHERE
+		        DEL_YN = 'N'
+		        <if test=" searchVcStatus != null and searchVcStatus != '' ">
+					AND VC_STATUS = #{searchVcStatus}
+				</if> 
+				<if test=" searchBgnde != null and searchBgnde != '' ">
+					<![CDATA[ AND VC_BGNDE >= REPLACE(#{searchBgnde}, '-', '') ]]>
+				</if>
+				<if test=" searchEndde != null and searchEndde != '' ">
+					<![CDATA[ AND VC_ENDDE <= REPLACE(#{searchEndde}, '-', '') ]]>
+				</if>
+				<if test=" searchEmplNm != null and searchEmplNm != '' ">
+					AND EMPL_NM LIKE  CONCAT('%', #{searchEmplNm} ,'%')	
+				</if>
+		    GROUP BY VC_STATUS) AS VACATION
+	</select>
+</mapper>

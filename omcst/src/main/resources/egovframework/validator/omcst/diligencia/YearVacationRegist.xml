@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE form-validation PUBLIC 
+    "-//Apache Software Foundation//DTD Commons Validator Rules Configuration 1.1//EN" 
+    "http://jakarta.apache.org/commons/dtds/validator_1_1.dtd">
+
+<form-validation>
+	
+	<formset>
+		<form name="yearVacationVO">
+			<field property="vcType" depends="required">
+        		<arg0 key="omcst.vacation.vcType" />
+			</field>
+			<field property="vcBgnde" depends="required">
+        		<arg0 key="omcst.vacation.vcBgnde" />
+			</field>
+			<field property="vcEndde" depends="required">
+        		<arg0 key="omcst.vacation.vcEndde" />
+			</field>			
+			<field property="vcDayCnt" depends="required">
+        		<arg0 key="omcst.vacation.vcDayCnt" />
+			</field>
+			
+			
+			
+			
+			
+
+		</form>
+    </formset>
+
+</form-validation>

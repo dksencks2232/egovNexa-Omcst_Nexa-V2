@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 2.1//EN" "http://tiles.apache.org/dtds/tiles-config_2_1.dtd">
+
+<tiles-definitions>
+    <!-- 페이지 타일즈 제외 --> 
+     <definition name="uat/uia/EgovLoginUsr" template="/WEB-INF/jsp/uat/uia/EgovLoginUsr.jsp"></definition>
+     <definition name="omcst/manage/users/Join" template="/WEB-INF/jsp/omcst/manage/users/Join.jsp"></definition>
+     <definition name="sym/log/clg/EgovLoginLogInqire" template="/WEB-INF/jsp/sym/log/clg/EgovLoginLogInqire.jsp"></definition>
+     <definition name="omcst/manage/users/IdCheck" template="/WEB-INF/jsp/omcst/manage/users/IdCheck.jsp"></definition>
+     <definition name="cmm/fms/EgovFileList" template="/WEB-INF/jsp/cmm/fms/EgovFileList.jsp"></definition>
+     <definition name="cmm/validator" template="/WEB-INF/jsp/cmm/validator.jsp"></definition>
+     <definition name="cop/bbs/EgovBoardMstrListPop" template="/WEB-INF/jsp/cop/bbs/EgovBoardMstrListPop.jsp"></definition>
+     <definition name="sym/mnu/mcm/EgovMenuCreat" template="/WEB-INF/jsp/sym/mnu/mcm/EgovMenuCreat.jsp"></definition>
+     <definition name="sym/prm/EgovFileNmSearch" template="/WEB-INF/jsp/sym/prm/EgovFileNmSearch.jsp"></definition>
+     <definition name="cmm/fms/EgovImgFileList" template="/WEB-INF/jsp/cmm/fms/EgovImgFileList.jsp"></definition>
+
+    <!-- 컨텐츠 타일즈 -->
+    <definition name="layouts-tiles"		template="/WEB-INF/tiles/tiles-layout.jsp">
+        <put-attribute name="header"    	value="/WEB-INF/tiles/inc/header.jsp" />
+        <put-attribute name="nevigationbar" value="/WEB-INF/tiles/inc/nevigationbar.jsp" />
+        <put-attribute name="left"      	value="/WEB-INF/tiles/inc/left.jsp" />
+        <put-attribute name="message"   	value="/WEB-INF/tiles/inc/message.jsp" />
+        <put-attribute name="footer"    	value="/WEB-INF/tiles/inc/footer.jsp" />
+    	<put-attribute name="content"   	value=""/>
+    </definition>
+
+    <definition name="*/*" extends="layouts-tiles"> 
+        <put-attribute name="content" value="/WEB-INF/jsp/{1}/{2}.jsp" />
+    </definition>
+
+    <definition name="*/*/*" extends="layouts-tiles">
+        <put-attribute name="content" value="/WEB-INF/jsp/{1}/{2}/{3}.jsp" />
+    </definition>
+    
+    <definition name="*/*/*/*" extends="layouts-tiles">
+        <put-attribute name="content" value="/WEB-INF/jsp/{1}/{2}/{3}/{4}.jsp" />
+    </definition>
+    
+</tiles-definitions>

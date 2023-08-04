@@ -1,0 +1,650 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="userMngDAO">
+<!-- 
+	<select id="selectUserList_S" parameterType="egovframework.let.uss.umt.service.UserDefaultVO" resultType="egovMap">
+		SELECT /* userAncDAO.selectUserList_S */
+			  X.EMPLYR_ID
+		    , X.USER_NM
+		    , X.USER_ABSNCE_AT
+		    , X.REG_YN
+		    , X.LAST_UPDUSR_ID
+		    , X.LAST_UPDT_PNTTM
+			, X.uniqId
+			, X.userTy
+			, X.userId 
+			, X.userNm
+			, X.emailAdres
+			, X.areaNo
+			, X.middleTelno
+			, X.endTelno
+			, X.moblphonNo
+			, X.groupId
+			, X.sttus
+			, X.sbscrbDe
+			, X.joinDate
+			, X.orgnztId
+			, (SELECT ORGNZT_NM FROM LETTNORGNZTINFO B WHERE B.ORGNZT_ID = X.orgnztId) AS orgnztNm
+		FROM 
+		(
+			SELECT  
+				  A.EMPLYR_ID 
+	    		, A.USER_NM
+		   		, (CASE WHEN B.USER_ABSNCE_AT IS NULL THEN 'N'
+		        	 	ELSE B.USER_ABSNCE_AT 
+	    		    END
+	    		   ) AS USER_ABSNCE_AT
+	   			, (CASE WHEN B.USER_ABSNCE_AT IS NULL THEN 'N'
+	         			ELSE 'Y' 
+	     			END
+	    		) AS REG_YN  
+	    		, LAST_UPDUSR_ID
+	    		, LAST_UPDT_PNTTM
+			    , A.ESNTL_ID               uniqId
+			    , 'USR03'               userTy
+			    , A.EMPLYR_ID             userId
+			    , A.USER_NM             userNm
+			    , A.EMAIL_ADRES           emailAdres
+			    , A.AREA_NO               areaNo
+			    , A.HOUSE_MIDDLE_TELNO      middleTelno
+			    , A.HOUSE_END_TELNO         endTelno
+			    , A.MBTLNUM           moblphonNo
+			    , A.GROUP_ID              groupId
+			    , A.EMPLYR_STTUS_CODE     sttus
+			    , A.SBSCRB_DE             sbscrbDe
+			    , DATE_FORMAT(A.JOIN_DATE, '%Y-%m-%d') AS		joinDate
+			    , A.ORGNZT_ID 			orgnztId      
+			FROM  
+				LETTNEMPLYRINFO A LEFT OUTER JOIN LETTNUSERABSNCE B ON  A.EMPLYR_ID = B.EMPLYR_ID
+		  	WHERE 1 = 1
+	        <if test='sbscrbSttus != "0"'>
+	            AND A.EMPLYR_STTUS_CODE LIKE  #{sbscrbSttus}
+	        </if>
+	        <if test='searchCondition == "0"'>
+	            AND A.EMPLYR_ID LIKE '%' #{searchKeyword} '%'
+	        </if>
+	        <if test='searchCondition == "1"'>
+	            AND A.USER_NM LIKE '%' #{searchKeyword} '%'
+	        </if>
+	        <if test='selAbsnceAt != "A"'>
+               AND B.USER_ABSNCE_AT = #{selAbsnceAt}
+               AND B.LAST_UPDT_PNTTM IS NOT NULL
+	        </if>
+	        ORDER BY A.EMPLYR_ID ASC
+		) X
+		
+		LIMIT #{recordCountPerPage} OFFSET #{firstIndex}
+	</select>
+
+    <select id="selectUserListTotCnt_S" parameterType="egovframework.let.uss.umt.service.UserDefaultVO" resultType="int">
+		SELECT	/* userMngDAO.selectUserListTotCnt_S */  
+            COUNT(1) cnt
+        FROM    
+        	LETTNEMPLYRINFO A LEFT OUTER JOIN LETTNUSERABSNCE B ON  A.EMPLYR_ID = B.EMPLYR_ID
+	    WHERE 1=1
+        <if test='sbscrbSttus != "0"'>
+            AND A.EMPLYR_STTUS_CODE LIKE  #{sbscrbSttus}
+        </if>
+        <if test='searchCondition == "0"'>
+            AND A.EMPLYR_ID LIKE '%' #{searchKeyword} '%'
+        </if>
+        <if test='searchCondition == "1"'>
+            AND A.USER_NM LIKE '%' #{searchKeyword} '%'
+        </if>
+        <if test='selAbsnceAt != "A"'>
+              AND B.USER_ABSNCE_AT = #{selAbsnceAt}
+              AND B.LAST_UPDT_PNTTM IS NOT NULL
+        </if>
+    </select>    
+-->
+
+    <select id="selectUserList_S" parameterType="egovframework.let.uss.umt.service.UserDefaultVO" resultType="egovMap">
+		SELECT /* userMngDAO.selectUserList_S */			
+    		uniqId
+    		, row_number() over(order by sbscrbDe DESC) rownum
+    		, userTy
+    		, userId 
+    		, userNm
+    		, emailAdres
+    		, areaNo
+    		, middleTelno
+    		, endTelno
+    		,CONCAT(areaNo , CASE WHEN middleTelno != '' THEN '-' END,middleTelno , CASE WHEN endTelno != '' THEN '-' END,endTelno) as tel    		    		    		
+    		, moblphonNo
+    		, groupId
+    		, sttus
+    		,
+    		(
+    			SELECT  /* CodeCacheDAO.selectListCode */
+				    CODE_NM
+				FROM
+				    LETTCCMMNDETAILCODE 
+				WHERE 1=1
+				AND    USE_AT = 'Y' 
+				AND CODE_ID='COM013'
+				AND CODE = sttus
+		 	) sttusNm    		
+    		, sbscrbDe
+    		, joinDate
+    		, orgnztId
+    		, (SELECT ORGNZT_NM FROM LETTNORGNZTINFO B WHERE B.ORGNZT_ID = A.orgnztId) AS orgnztNm
+    		, case when retire is null then '아니오'
+    			   else '예'
+    		  end retire
+		FROM(
+		    SELECT
+		        ESNTL_ID               uniqId,
+		        'USR03'               userTy,
+		        EMPLYR_ID             userId,
+		        USER_NM             userNm,
+		        EMAIL_ADRES           emailAdres,
+		        AREA_NO               areaNo,
+		        HOUSE_MIDDLE_TELNO      middleTelno,
+		        HOUSE_END_TELNO         endTelno,
+		        MBTLNUM           moblphonNo,
+		        GROUP_ID              groupId,
+		        EMPLYR_STTUS_CODE     sttus,
+		        SBSCRB_DE             sbscrbDe,
+		        DATE_FORMAT(JOIN_DATE, '%Y-%m-%d') AS		joinDate,
+		        ORGNZT_ID 			orgnztId,
+		        RETIRE				retire
+		    FROM    LETTNEMPLYRINFO
+		    ) A
+		WHERE 1=1
+        <if test='searchCondition == "0"'>
+            AND userNm LIKE '%' #{searchKeyword} '%'
+        </if>
+        <if test='searchCondition == "1"'>
+            AND userId LIKE '%' #{searchKeyword} '%'
+        </if>
+        <if test='searchCondition == "2"'>
+            AND emailAdres LIKE '%' #{searchKeyword} '%'
+        </if>
+        <if test='sbscrbSttus != "0"'>
+            AND sttus LIKE  #{sbscrbSttus}
+        </if>
+        <if test='retireYN != "0"'>
+            <if test='retireYN == "Y"'>
+	        AND retire IS NOT NULL
+            </if>
+            <if test='retireYN == "N"'>
+	        AND retire IS NULL
+            </if>
+        </if>
+        <if test='orgnztId != "0"'>
+            <if test='orgnztId == "LET"'>
+            AND orgnztId = 'ORGNZT_0000000000000'
+            </if>
+            <if test='orgnztId == "OMF"'>
+            AND orgnztId = 'ORGNZT_0000000000001'
+            </if>
+        </if>
+        <if test=" searchBgnde != null and searchBgnde != '' ">
+		    <![CDATA[ AND joinDate >= #{searchBgnde}]]>
+		</if>
+		<if test=" searchEndde != null and searchEndde != '' ">
+		    <![CDATA[ AND joinDate <= #{searchEndde}]]>
+		</if>         
+		ORDER BY sbscrbDe DESC
+		LIMIT #{recordCountPerPage} OFFSET #{firstIndex}
+    </select>
+    
+    <select id="selectUserListTotCnt_S" parameterType="egovframework.let.uss.umt.service.UserDefaultVO" resultType="int">
+		SELECT	/* userMngDAO.selectUserListTotCnt_S */  
+        	COUNT(1) totcnt
+		FROM(
+           SELECT
+               ESNTL_ID               uniqId,
+               'USR03'               userTy,
+               EMPLYR_ID             userId,
+               USER_NM             userNm,
+               EMAIL_ADRES           emailAdres,
+               AREA_NO               areaNo,
+               HOUSE_MIDDLE_TELNO      middleTelno,
+               HOUSE_END_TELNO         endTelno,
+               MBTLNUM           moblphonNo,
+               GROUP_ID              groupId,
+               EMPLYR_STTUS_CODE     sttus,
+               SBSCRB_DE             sbscrbDe,
+               ORGNZT_ID 			orgnztId,
+               DATE_FORMAT(JOIN_DATE, '%Y-%m-%d') AS		joinDate,
+               RETIRE				retire
+           FROM    LETTNEMPLYRINFO
+		) A
+        WHERE 1=1
+        <if test='searchCondition == "0"'>
+            AND userNm LIKE '%' #{searchKeyword} '%'
+        </if>
+        <if test='searchCondition == "1"'>
+            AND userId LIKE '%' #{searchKeyword} '%'
+        </if>
+        <if test='searchCondition == "2"'>
+            AND emailAdres LIKE '%' #{searchKeyword} '%'
+        </if>
+        <if test='sbscrbSttus != "0"'>
+            AND sttus LIKE  #{sbscrbSttus}
+        </if>
+        <if test='retireYN != "0"'>
+            <if test='retireYN == "Y"'>
+	        AND retire IS NOT NULL
+            </if>
+            <if test='retireYN == "N"'>
+	        AND retire IS NULL
+            </if>
+        </if>
+        <if test='orgnztId != "0"'>
+            <if test='orgnztId == "LET"'>
+            AND orgnztId = 'ORGNZT_0000000000000'
+            </if>
+            <if test='orgnztId == "OMF"'>
+            AND orgnztId = 'ORGNZT_0000000000001'
+            </if>
+        </if>
+        <if test=" searchBgnde != null and searchBgnde != '' ">
+		    <![CDATA[ AND joinDate >= #{searchBgnde}]]>
+		</if>
+		<if test=" searchEndde != null and searchEndde != '' ">
+		    <![CDATA[ AND joinDate <= #{searchEndde}]]>
+		</if>        
+    </select>    
+
+    <select id="selectAntList_S" parameterType="egovframework.omcst.attendance.vo.AttendanceVO" resultType="egovMap">
+        SELECT /* userMngDAO.selectAntList_S */
+			   ATT_ID   AS att_id
+			 , CASE WHEN STATUS = '1' 
+			   THEN '출근완료' 
+               ELSE '퇴근완료'
+               END      AS status
+		     , ATT_DATE AS attDate
+		     , LAT_DATE AS latDate
+		     , ESNTL_ID AS uniqId
+		     , DATE_FORMAT(ATT_DATE,'%Y%m%d') AS compareAttDate
+             , DATE_FORMAT(NOW(),'%Y%m%d')    AS nowDate
+		  FROM omcst.attendanceinfo
+		 WHERE ESNTL_ID = #{esntl_id}
+		<if test='stDate != null and stDate != ""'>
+		    AND ATT_DATE BETWEEN DATE_FORMAT(#{stDate},'%Y%m%d') AND  DATE_FORMAT(#{edDate},'%Y%m%d')
+		</if>
+		<if test='status != null and status != ""'>
+		    <if test='status == "1"'>		        
+		        AND LAT_DATE IS NOT NULL
+		    </if>
+		    <if test='status == "2"'>     
+		        AND LAT_DATE IS NULL
+		    </if>
+        </if>		
+	    LIMIT #{recordCountPerPage} OFFSET #{firstIndex}
+    </select>
+    
+    <select id="selectAntListTotCnt_S" parameterType="egovframework.omcst.attendance.vo.AttendanceVO" resultType="int">
+	    SELECT /* userMngDAO.selectAntListTotCnt_S */  
+          	 COUNT(1) totcnt
+	    FROM(
+	    		SELECT
+	    			   ATT_ID   
+	    			 , STATUS   
+	    			 , ATT_DATE 
+	    			 , LAT_DATE 
+	    			 , ESNTL_ID 
+	    			 , DATE_FORMAT(ATT_DATE,'%Y%m%d') AS compareAttDate
+	    			 , DATE_FORMAT(NOW(),'%Y%m%d')    AS nowDate
+	    		  FROM omcst.attendanceinfo
+	    	) A
+	     WHERE A.ESNTL_ID = #{esntl_id}
+	    <if test='status != null and status != ""'>
+	        <if test='status == "1"'>		        
+	            AND A.ATT_DATE BETWEEN DATE_FORMAT(#{stDate},'%Y%m%d') AND  DATE_FORMAT(#{edDate},'%Y%m%d')
+	        </if>
+	        <if test='status == "2"'>     
+	            AND A.LAT_DATE BETWEEN DATE_FORMAT(#{stDate},'%Y%m%d') AND  DATE_FORMAT(#{edDate},'%Y%m%d')
+	        </if>
+        </if>        
+    </select>
+
+    <update id="updatelatList" parameterType="String">
+        UPDATE omcst.attendanceinfo
+           SET LAT_DATE = NOW()
+             , STATUS   = '2'
+         WHERE att_id = #{latList};
+    </update>
+ 
+<!-- 
+            <if test='sbscrbSttus != "0"'>
+                AND sttus LIKE  #{sbscrbSttus}
+            </if>
+            <if test='searchCondition == "0"'>
+                AND userId LIKE #{searchKeyword}
+            </if>
+            <if test='searchCondition == "1"'>
+                AND userNm LIKE '%' #{searchKeyword} '%'
+            </if>
+ -->
+
+<!-- 
+ 	<delete id="deleteUserAbsnce">        
+	    DELETE	/* userMngDAO.deleteUserAbsnce */ 
+        FROM LETTNUSERABSNCE 
+        WHERE 
+        	EMPLYR_ID = #{userId}
+    </delete>
+-->
+
+    <select id="idCheck_S" resultType="int">
+		SELECT	/* userMngDAO.idCheck_S */ 
+			COUNT(1) usedCnt
+		FROM(
+			SELECT
+               EMPLYR_ID             userId
+           	FROM    LETTNEMPLYRINFO
+           	UNION ALL
+           	SELECT
+               ENTRPRS_MBER_ID        userId
+           	FROM    LETTNENTRPRSMBER
+           	UNION ALL
+           	SELECT
+               MBER_ID               userId
+           	FROM    LETTNGNRLMBER
+           ) A
+		WHERE 
+       		userId = #{checkId}        
+    </select>
+
+    <select id="authCheck_S" resultType="int">
+		SELECT	/* userMngDAO.authCheck_S */ 
+			COUNT(1) usedCnt
+		FROM(
+            SELECT 
+               AUTHOR_CODE
+            FROM 
+              LETTNAUTHORINFO
+            WHERE 1=1
+			AND AUTHOR_CODE =#{checkId} 
+        ) A
+    </select>
+    
+    <insert id="insertUser_S">
+		INSERT INTO LETTNEMPLYRINFO	/* userMngDAO.insertUser_S */ 
+			(ESNTL_ID
+             , EMPLYR_ID
+             , USER_NM
+             , PASSWORD
+             , PASSWORD_HINT
+             , PASSWORD_CNSR
+             , EMPL_NO      
+             , IHIDNUM      
+             , SEXDSTN_CODE 
+             , BRTHDY       
+             , AREA_NO      
+             , HOUSE_MIDDLE_TELNO
+             , HOUSE_END_TELNO   
+             , FXNUM             
+             , HOUSE_ADRES       
+             , DETAIL_ADRES      
+             , ZIP               
+             , OFFM_TELNO        
+             , MBTLNUM     
+             , EMAIL_ADRES 
+             , OFCPS_NM    
+             , GROUP_ID    
+             , ORGNZT_ID   
+             , PSTINST_CODE     
+             , EMPLYR_STTUS_CODE
+             , SBSCRB_DE        
+             , CRTFC_DN_VALUE
+             , JOIN_DATE        
+             , RETIRE      
+		) VALUES (
+			#{uniqId}
+            , #{emplyrId}          
+            , #{emplyrNm}          
+            , #{password}          
+            , #{passwordHint}      
+            , #{passwordCnsr}                      
+            , #{emplNo}            
+            , #{ihidnum}           
+            , #{sexdstnCode}       
+            , #{brth}              
+            , #{areaNo}            
+            , #{homemiddleTelno}   
+            , #{homeendTelno}      
+            , #{fxnum}             
+            , #{homeadres}         
+            , #{detailAdres}       
+            , #{zip}               
+            , #{offmTelno}         
+            , #{moblphonNo}        
+            , #{emailAdres}        
+            , #{ofcpsNm}           
+            , #{groupId}           
+            , #{orgnztId}          
+            , #{insttCode}         
+            , #{emplyrSttusCode}   
+            , sysdate()           
+            , #{subDn}
+            , #{joinDate}
+            , #{retire}
+		)    
+    </insert>
+    
+    <select id="selectUser_S" resultType="egovframework.let.uss.umt.service.UserManageVO">
+		SELECT	/* userMngDAO.selectUser_S */
+            ESNTL_ID           uniqId         
+            , 'USR03'           userTy		
+            , EMPLYR_ID         emplyrId    
+            , USER_NM         emplyrNm      
+            , PASSWORD          password    
+            , PASSWORD_HINT     passwordHint 
+            , PASSWORD_CNSR     passwordCnsr 
+            , EMPL_NO           emplNo       
+            , IHIDNUM           ihidnum      
+            , SEXDSTN_CODE      sexdstnCode  
+            , BRTHDY              brth       
+            , AREA_NO           areaNo       
+            , HOUSE_MIDDLE_TELNO  homemiddleTelno
+            , HOUSE_END_TELNO     homeendTelno   
+            , FXNUM             fxnum           
+            , HOUSE_ADRES         homeadres     
+            , DETAIL_ADRES      detailAdres     
+            , ZIP               zip             
+            , OFFM_TELNO        offmTelno       
+            , MBTLNUM       moblphonNo     
+            , EMAIL_ADRES       emailAdres 
+            , OFCPS_NM          ofcpsNm    
+            , GROUP_ID          groupId    
+            , ORGNZT_ID         orgnztId   
+            , PSTINST_CODE        insttCode 
+            , EMPLYR_STTUS_CODE emplyrSttusCode 
+            , SBSCRB_DE         sbscrbDe       
+            , CRTFC_DN_VALUE            subDn
+            , DATE_FORMAT(JOIN_DATE, '%Y-%m-%d') AS		joinDate
+            , DATE_FORMAT(RETIRE, '%Y-%m-%d') AS		retire
+        FROM 
+        	LETTNEMPLYRINFO
+        WHERE ESNTL_ID=#{uniqId}        
+    </select>
+    
+    <select id="selectPassword_S" resultType="egovframework.let.uss.umt.service.UserManageVO">
+		SELECT	/* userMngDAO.selectPassword_S */
+			PASSWORD          password 
+        FROM    LETTNEMPLYRINFO
+        WHERE   
+        	ESNTL_ID=#{uniqId}        
+    </select>
+    
+    <update id="updatePassword_S">
+		UPDATE LETTNEMPLYRINFO /* userMngDAO.updatePassword_S */
+            SET 
+				PASSWORD   =  #{password}
+		WHERE  
+			ESNTL_ID  = #{uniqId}        
+    </update>
+    
+    <insert id="insertUserHistory_S">
+        INSERT INTO LETTHEMPLYRINFOCHANGEDTLS /* userMngDAO.insertUserHistory_S */
+			(
+			EMPLYR_ID     
+            , EMPL_NO     
+            , SEXDSTN_CODE
+            , BRTHDY      
+            , AREA_NO     
+            , HOUSE_MIDDLE_TELNO
+            , HOUSE_END_TELNO  
+            , FXNUM            
+            , HOUSE_ADRES      
+            , DETAIL_ADRES     
+            , ZIP              
+            , OFFM_TELNO       
+            , MBTLNUM       
+            , EMAIL_ADRES   
+            , GROUP_ID      
+            , ORGNZT_ID     
+            , PSTINST_CODE  
+            , EMPLYR_STTUS_CODE
+            , ESNTL_ID
+            , JOIN_DATE         
+            , CHANGE_DE           
+		) 
+			SELECT 
+				EMPLYR_ID         
+	            , EMPL_NO         
+	            , SEXDSTN_CODE    
+	            , BRTHDY          
+	            , AREA_NO         
+	            , HOUSE_MIDDLE_TELNO 
+	            , HOUSE_END_TELNO  
+	            , FXNUM            
+	            , HOUSE_ADRES      
+	            , DETAIL_ADRES     
+	            , ZIP              
+	            , OFFM_TELNO       
+	            , MBTLNUM      
+	            , EMAIL_ADRES  
+	            , GROUP_ID     
+	            , ORGNZT_ID    
+	            , PSTINST_CODE 
+	            , EMPLYR_STTUS_CODE
+	            , ESNTL_ID
+	            , JOIN_DATE         
+	            , now()
+			FROM LETTNEMPLYRINFO
+            WHERE ESNTL_ID = #{uniqId}        
+    </insert>
+
+    <update id="updateTopUser_S">        
+		UPDATE LETTNEMPLYRINFO /* userMngDAO.updateUser_S */
+			SET 
+				EMPLYR_ID           	= #{emplyrId} 
+                , USER_NM           	= #{emplyrNm}
+                , MBTLNUM         		= #{moblphonNo}    
+                , PSTINST_CODE          = #{insttCode} 
+                , ORGNZT_ID           	= #{orgnztId}   
+                , OFCPS_NM            	= #{ofcpsNm}    
+                , EMAIL_ADRES         	= #{emailAdres} 
+                , AREA_NO             	= #{areaNo}       
+                , HOUSE_MIDDLE_TELNO    = #{homemiddleTelno}
+                , HOUSE_END_TELNO       = #{homeendTelno}   
+                , JOIN_DATE				= #{joinDate}
+                , GROUP_ID            	= #{groupId}
+                , ZIP                 	= #{zip}           
+                , HOUSE_ADRES           = #{homeadres}   
+                , DETAIL_ADRES        	= #{detailAdres}                   
+        WHERE 
+        	ESNTL_ID = #{uniqId}
+    </update>
+    
+    <update id="updateUser_S">        
+		UPDATE LETTNEMPLYRINFO /* userMngDAO.updateUser_S */
+			SET 
+				EMPLYR_ID           	= #{emplyrId} 
+                , USER_NM           	= #{emplyrNm}
+                , PASSWORD_HINT       	= #{passwordHint} 
+                , PASSWORD_CNSR       	= #{passwordCnsr} 
+                , EMPL_NO             	= #{emplNo}       
+                , IHIDNUM             	= #{ihidnum}      
+                , SEXDSTN_CODE        	= #{sexdstnCode}  
+                , BRTHDY                = #{brth}       
+                , AREA_NO             	= #{areaNo}       
+                , HOUSE_MIDDLE_TELNO    = #{homemiddleTelno}
+                , HOUSE_END_TELNO       = #{homeendTelno}   
+                , FXNUM               	= #{fxnum}         
+                , HOUSE_ADRES           = #{homeadres}   
+                , DETAIL_ADRES        	= #{detailAdres}   
+                , ZIP                 	= #{zip}           
+                , OFFM_TELNO          	= #{offmTelno}     
+                , MBTLNUM         		= #{moblphonNo}    
+                , EMAIL_ADRES         	= #{emailAdres} 
+                , OFCPS_NM            	= #{ofcpsNm}    
+                , GROUP_ID            	= #{groupId}    
+                , ORGNZT_ID           	= #{orgnztId}   
+                , PSTINST_CODE          = #{insttCode} 
+                , EMPLYR_STTUS_CODE   	= #{emplyrSttusCode}
+                , CRTFC_DN_VALUE        = #{subDn}
+                , JOIN_DATE				= #{joinDate}
+                , RETIRE				= (CASE WHEN #{retire} = '' THEN NULL ELSE #{retire} END) 
+        WHERE 
+        	ESNTL_ID = #{uniqId}
+    </update>
+    
+ 	<delete id="deleteUser_S">        
+	    DELETE	/* userMngDAO.deleteUser_S */ 
+	    FROM LETTNEMPLYRINFO 
+	    WHERE 
+	    	ESNTL_ID=#{delId}
+    </delete>
+    
+    <delete id="deleteMemberVacation">        
+	   DELETE	/* userMngDAO.deleteMemberVacation */
+		FROM OM_YEARMEMVACATION
+		WHERE 
+		EMPL_NO= (SELECT EMPLYR_ID
+						FROM LETTNEMPLYRINFO
+						WHERE 
+							ESNTL_ID =#{delId})
+    </delete>
+    
+    <insert id="insertMemberVacation">
+		INSERT INTO OM_YEARMEMVACATION	/* userMngDAO.insertMemberVacation */ 
+			(EMPL_NO
+             , YEAR
+             , MV_DAY
+             , REGISTER_ID
+             ) VALUES (
+			#{emplyrId}
+            , YEAR(NOW())         
+            , #{mvDay}          
+            , 'admin'  
+            )
+	</insert>
+	
+	<select id="emailCheck" resultType="int">
+		SELECT /* userMngDAO.emailCheck */ 
+		    COUNT(1) usedCnt
+		FROM
+		    (SELECT 
+		        EMAIL_ADRES email
+		    FROM
+		        LETTNEMPLYRINFO UNION ALL SELECT 
+		        APPLCNT_EMAIL_ADRES email
+		    FROM
+		        LETTNENTRPRSMBER UNION ALL SELECT 
+		        MBER_EMAIL_ADRES email
+		    FROM
+		        LETTNGNRLMBER) A
+		WHERE
+		    email = #{email}
+    </select>
+
+    <update id="updateGridList_S">        
+		UPDATE LETTNEMPLYRINFO /* userMngDAO.updateGridList_S */
+		SET 
+           USER_NM = #{userNm},
+           EMPLYR_STTUS_CODE = #{sttus},
+           JOIN_DATE = #{joinDate},
+           ORGNZT_ID = #{orgnztId},
+           EMAIL_ADRES = #{emailAdres}
+        WHERE 
+        	ESNTL_ID = #{uniqId}
+    </update>
+    
+</mapper>

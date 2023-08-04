@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="loginDAO">
+
+
+	<!-- 로그인 처리를 위한 resultMap -->
+	<resultMap id="login" type="egovframework.com.cmm.LoginVO">
+		<result property="id" column="id"/>
+		<result property="name" column="name"/>
+		<result property="ihidNum" column="ihidNum"/>
+		<result property="email" column="email"/>
+		<result property="password" column="password"/>
+		<result property="userSe" column="userSe"/>
+		<result property="orgnztId" column="orgnztId"/>
+		<result property="uniqId" column="uniqId"/>		
+	</resultMap>
+	
+	<!-- 아이디 찾기를 위한 resultMap 
+	<resultMap id="id" class="egovframework.com.cmm.LoginVO">
+		<result property="id" column="id" columnIndex="1"/>
+	</resultMap>
+	-->
+	<!-- 비밀번호 처리를 위한 resultMap 
+	<resultMap id="password" class="egovframework.com.cmm.LoginVO">
+		<result property="password" column="password" columnIndex="1"/>
+	</resultMap>
+	-->
+	<!-- 일반 로그인 -->
+	<select id="loginDAO.actionLogin" resultMap="login">
+		/* loginDAO.loginDAO.actionLogin */   
+		<if test="userSe == &quot;USR&quot;">
+			
+            SELECT EMPLYR_ID AS id
+                 , USER_NM AS name
+                 , PASSWORD AS password
+                 , IHIDNUM AS ihidNum
+                 , EMAIL_ADRES AS email
+                 , 'USR' AS userSe
+                 , ORGNZT_ID AS orgnztId
+                 , ESNTL_ID AS uniqId
+              FROM LETTNEMPLYRINFO
+             WHERE EMPLYR_ID = #{id}
+               AND PASSWORD = #{password}
+               AND EMPLYR_STTUS_CODE = 'P'
+			
+		</if>
+	</select>
+	<select id="connectTime" resultType="String">
+			SELECT 
+			    DATE_FORMAT(CREAT_DT,'%Y.%m.%d. %r')
+			FROM
+			    LETTNLOGINLOG
+			WHERE
+			    CONECT_ID = #{enstlId}
+			ORDER BY CREAT_DT DESC
+			limit 1
+	</select>
+	
+	<!-- 인증서 로그인
+	<select id="loginDAO.actionCrtfctLogin" resultMap="login">
+		<![CDATA[
+		SELECT emplyr_id AS id
+		     , USER_NM AS name
+		     , password AS password
+		     , ihidnum AS ihidNum
+		     , email_adres AS email
+		     , 'USR' AS userSe
+		     , orgnzt_id AS orgnztId
+		     , ESNTL_ID AS uniqId
+		  FROM LETTNEMPLYRINFO
+		 WHERE sub_dn = #{dn}
+		]]>
+	</select>
+	 -->
+	<!-- 아이디 찾기
+	<select id="loginDAO.searchId" resultMap="id">
+		<isEqual property="userSe" compareValue="GNR">
+			<![CDATA[
+			SELECT mber_id AS id
+			  FROM LETTNGNRLMBER
+			 WHERE mber_nm = #{name}
+			   AND mber_email_adres = #{email}
+			   AND mber_sttus = 'P'
+			]]>
+		</isEqual>
+		<isEqual property="userSe" compareValue="ENT">
+			<![CDATA[
+			SELECT entrprsmber_id AS id
+			  FROM LETTNENTRPRSMBER
+			 WHERE cmpny_nm = #{name}
+			   AND applcnt_email_adres = #{email}
+			   AND entrprs_mber_sttus = 'P'
+			]]>
+		</isEqual>
+		<isEqual property="userSe" compareValue="USR">
+			<![CDATA[
+			SELECT emplyr_id AS id
+			  FROM LETTNEMPLYRINFO
+			 WHERE USER_NM = #{name}
+			   AND email_adres = #{email}
+			   AND emplyr_sttus_code = 'P'
+			]]>
+		</isEqual>
+	</select>
+	 -->
+	<!-- 비밀번호 찾기 
+	<select id="loginDAO.searchPassword" resultMap="password">
+		<isEqual property="userSe" compareValue="GNR">
+			<![CDATA[
+			SELECT password AS password
+			  FROM LETTNGNRLMBER
+			 WHERE mber_id = #{id}
+			   AND mber_nm = #{name}
+			   AND mber_email_adres = #{email}
+			   AND password_hint = #{passwordHint}
+			   AND password_cnsr = #{passwordCnsr}
+			   AND mber_sttus = 'P'
+			]]>
+		</isEqual>
+		<isEqual property="userSe" compareValue="ENT">
+			<![CDATA[
+			SELECT entrprs_mber_password AS password
+			  FROM LETTNENTRPRSMBER
+			 WHERE entrprsmber_id = #{id}
+			   AND cmpny_nm = #{name}
+			   AND applcnt_email_adres = #{email}
+			   AND entrprs_mber_password_hint = #{passwordHint}
+			   AND entrprs_mber_password_cnsr = #{passwordCnsr}
+			   AND entrprs_mber_sttus = 'P'
+			]]>
+		</isEqual>
+		<isEqual property="userSe" compareValue="USR">
+			<![CDATA[
+			SELECT password AS password
+			  FROM LETTNEMPLYRINFO
+			 WHERE emplyr_id = #{id}
+			   AND USER_NM = #{name}
+			   AND email_adres = #{email}
+			   AND password_hint = #{passwordHint}
+			   AND password_cnsr = #{passwordCnsr}
+			   AND emplyr_sttus_code = 'P'
+			]]>
+		</isEqual>
+	</select>
+	-->
+	<!-- 변경된 비밀번호를 저장 
+	<update id="loginDAO.updatePassword">
+		<isEqual property="userSe" compareValue="GNR">
+			<![CDATA[
+			UPDATE LETTNGNRLMBER
+			   SET password = #{password}
+			 WHERE mber_id = #{id}
+			]]>
+		</isEqual>
+		<isEqual property="userSe" compareValue="ENT">
+			<![CDATA[
+			UPDATE LETTNENTRPRSMBER
+			   SET entrprs_mber_password = #{password}
+			 WHERE entrprsmber_id = #{id}
+			]]>
+		</isEqual>
+		<isEqual property="userSe" compareValue="USR">
+			<![CDATA[
+			UPDATE LETTNEMPLYRINFO
+			   SET password = #{password}
+			 WHERE emplyr_id = #{id}
+			]]>
+		</isEqual>
+	</update>
+	-->
+
+	<!-- 아이디조회 -->
+	<select id="loginDAO.selectEgovFindId" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		/* loginDAO.loginDAO.selectEgovFindId */   			
+        SELECT                 
+               EMPLYR_ID
+          FROM LETTNEMPLYRINFO
+         WHERE USER_NM = #{userNm}
+         AND   area_No = #{areaNo}
+ 		 AND   house_middle_Telno = #{homemiddleTelno}         
+		 AND   house_end_Telno = #{homeendTelno}                                    
+         AND EMPLYR_STTUS_CODE = 'P'
+	</select>
+	<!-- 
+		핸드폰번호
+		AND MBTLNUM = #{mbtlnum}
+	 -->
+	<!-- 비밀번호 변경 조회 -->
+	<select id="loginDAO.selectEgovFindPwd" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		/* loginDAO.loginDAO.selectEgovFindPwd */   			
+        SELECT                 
+               count(user_nm) cnt
+          FROM LETTNEMPLYRINFO
+         WHERE EMPLYR_ID = #{userId}
+         AND   PASSWORD_HINT = #{hint}
+         AND   PASSWORD_CNSR = #{answer}
+         AND EMPLYR_STTUS_CODE = 'P'
+	</select>
+	
+		<!-- 비밀번호 변경 조회 -->
+	<update id="updateEgovFindPwd" parameterType="java.util.HashMap">
+		/* loginDAO.loginDAO.updateEgovFindPwd */   			
+		UPDATE LETTNEMPLYRINFO
+		   SET password = #{password}
+		WHERE emplyr_id = #{userId}
+	</update>
+
+	<!-- 사용자 인증  패스워드 조회 -->
+	<select id="loginDAO.selectPwd" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		/* loginDAO.loginDAO.selectPwd */   			
+        SELECT                 
+               COUNT(EMPLYR_ID) cnt
+          FROM LETTNEMPLYRINFO
+         WHERE EMPLYR_ID = #{id}
+         AND   PASSWORD = #{pwd}
+         AND EMPLYR_STTUS_CODE = 'P'
+	</select>
+	
+	
+</mapper>

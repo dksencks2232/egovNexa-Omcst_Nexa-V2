@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:p="http://www.springframework.org/schema/p"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/aop 
+    	http://www.springframework.org/schema/aop/spring-aop.xsd"	
+	xmlns:aop="http://www.springframework.org/schema/aop">
+
+    <!-- 패키지 내 Controller, Service, Repository 클래스의 auto detect를 위한 mvc 설정 -->
+    <context:component-scan base-package="egovframework">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Service"/>
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Repository"/>
+    </context:component-scan>
+
+    <!-- 서블릿컨네이너상의 exception에 대한 오류 페이지를 연결하는 mvc 설정 -->
+    <bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+        <property name="defaultErrorView" value="cmm/error/egovError"/>
+        <property name="exceptionMappings">
+            <props>
+                <prop key="org.springframework.dao.DataAccessException">cmm/error/dataAccessFailure</prop>
+                <prop key="org.springframework.transaction.TransactionException">cmm/error/transactionFailure</prop>
+                <prop key="org.egovframe.rte.fdl.cmmn.exception.EgovBizException">cmm/error/egovError</prop>
+                <prop key="org.springframework.security.AccessDeniedException">cmm/error/accessDenied</prop>
+            </props>
+        </property>
+    </bean>
+
+	<!-- for JFile -->
+	<bean class="org.springframework.web.servlet.view.BeanNameViewResolver" p:order="0"/>
+	 
+	<!--  Tiles 설정 -->
+	<bean id="tilesViewResolver" class="org.springframework.web.servlet.view.UrlBasedViewResolver">
+	    <property name="viewClass" value="org.springframework.web.servlet.view.tiles3.TilesView" />
+	    <property name="order" value="1" />
+	</bean>
+	 
+	<!-- Tiles Configurer -->
+	<bean id="tilesConfigurer" class="org.springframework.web.servlet.view.tiles3.TilesConfigurer">
+	        <property name="definitions">
+	            <list>
+	            <value>/WEB-INF/tiles/tiles-layout.xml</value>
+	            </list>
+	        </property>
+	</bean>
+	<!--  //Tiles 설정 -->
+
+    <!-- 화면처리용 JSP 파일명의  prefix, suffix 처리에 대한 mvc 설정  -->
+    <bean class="org.springframework.web.servlet.view.UrlBasedViewResolver" p:order="2"
+	    p:viewClass="org.springframework.web.servlet.view.JstlView"
+	    p:prefix="/WEB-INF/jsp/" p:suffix=".jsp"/>
+
+    <!-- Annotation 을 사용하지 않는 경우에 대한 MVC 처리 설정 -->
+    <mvc:view-controller path="/cmmn/validator.do" view-name="cmmn/validator"/>
+    
+    <mvc:annotation-driven/>
+    
+    <!-- 2023.02.07 KJE servlet-mapping 설정 -->
+    <mvc:default-servlet-handler />
+    
+    <!-- 20230203CSH aop contoller단 적용 -->
+    <aop:aspectj-autoproxy/>
+    
+    <!-- jsonView -->
+    <bean id="beanNameResolver" class="org.springframework.web.servlet.view.BeanNameViewResolver" p:order="0"/>
+    <bean id="jsonView" class="org.springframework.web.servlet.view.json.MappingJackson2JsonView">
+        <property name="contentType" value="application/json;charset=UTF-8"></property>
+    </bean>
+    
+    <!-- 20230306CSH @Value 어노테이션 으로 globals.properties내의 값 사용 -->
+    <context:property-placeholder location="classpath:egovframework/egovProps/globals.properties" />
+    
+    <mvc:interceptors>
+    
+     <mvc:interceptor>
+         <mvc:mapping path="/**"/>
+        <bean class="egovframework.omcst.common.interceptor.MenuNaviConInterceptor"/>
+     </mvc:interceptor>
+     
+     <mvc:interceptor>
+         <mvc:mapping path="/**"/>
+        <bean class="egovframework.omcst.common.interceptor.AuthInterceptor"/>
+     </mvc:interceptor>
+     
+ 	</mvc:interceptors>
+
+</beans>

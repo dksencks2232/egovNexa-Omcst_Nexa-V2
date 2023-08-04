@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="YearVacationDAO">
+
+
+	<select id="selectListYearVacation" parameterType="egovframework.omcst.vacation.year.service.YearVacationVO" resultType="egovframework.omcst.vacation.year.service.YearVacationVO">
+		SELECT /* YearVacationDAO.selectListYearVacation */
+			BASE_T.*
+		FROM
+			(SELECT 
+					A.VC_ID
+					, A.EMPL_NO
+					, A.VC_TYPE
+					, DATE_FORMAT(A.VC_BGNDE,'%Y-%m-%d') AS VC_BGNDE
+					, DATE_FORMAT(A.VC_ENDDE,'%Y-%m-%d') AS VC_ENDDE
+					, A.VC_DAY_CNT
+					, A.VC_STATUS
+					, A.DEL_YN
+					, A.FRST_REGISTER_ID
+					, DATE_FORMAT(A.FRST_REGIST_PNTTM,'%Y-%m-%d') AS FRST_REGIST_PNTTM
+					, A.LAST_UPDUSR_ID
+					, DATE_FORMAT(A.LAST_UPDT_PNTTM,'%Y-%m-%d') AS LAST_UPDT_PNTTM			
+					, (SELECT USER_NM FROM LETTNEMPLYRINFO WHERE EMPLYR_ID = A.EMPL_NO) AS EMPL_NM
+					, (SELECT USER_NM FROM LETTNEMPLYRINFO WHERE EMPLYR_ID = A.LAST_UPDUSR_ID) AS LAST_UPDUSR_NM			
+					, C1.CODE_NM AS VC_STATUS_NM 
+					, C2.CODE_NM AS VC_TYPE_NM
+			FROM OM_VACATION A		
+					LEFT OUTER JOIN LETTCCMMNDETAILCODE C1 ON C1.CODE_ID = 'COM030' AND A.VC_STATUS = C1.CODE
+					LEFT OUTER JOIN LETTCCMMNDETAILCODE C2 ON C2.CODE_ID = 'COM031' AND A.VC_TYPE = C2.CODE
+			WHERE 
+				A.DEL_YN = 'N'
+				AND A.EMPL_NO = #{userId}
+				<if test=" searchVcType != null and searchVcType != '' ">
+					AND A.VC_TYPE = #{searchVcType}
+				</if>
+				<if test=" searchVcStatus != null and searchVcStatus != '' ">
+					AND A.VC_STATUS = #{searchVcStatus}
+				</if> 
+				<if test=" searchBgnde != null and searchBgnde != '' ">
+					<![CDATA[ AND A.VC_BGNDE >= REPLACE(#{searchBgnde}, '-', '') ]]>
+				</if>
+				<if test=" searchEndde != null and searchEndde != '' ">
+					<![CDATA[ AND A.VC_ENDDE <= REPLACE(#{searchEndde}, '-', '') ]]>
+				</if> 
+			) BASE_T
+		ORDER BY
+			BASE_T.EMPL_NM, BASE_T.FRST_REGIST_PNTTM DESC	
+	</select>
+	
+	<select id="selectYearVacation" parameterType="egovframework.omcst.vacation.year.service.YearVacationVO" resultType="egovframework.omcst.vacation.year.service.YearVacationVO">
+		SELECT /* YearVacationDAO.selectYearVacation */
+			A.VC_ID			
+			, A.EMPL_NO
+			, A.VC_TYPE
+			, A.VC_BGNDE
+			, A.VC_ENDDE
+			, A.VC_DAY_CNT
+			, A.VC_STATUS
+			, A.DEL_YN
+			, A.FRST_REGISTER_ID
+			, A.FRST_REGIST_PNTTM
+			, A.LAST_UPDUSR_ID
+			, A.LAST_UPDT_PNTTM
+			
+			, L.USER_NM AS EMPL_NM
+			 
+		FROM OM_VACATION A
+			LEFT OUTER JOIN LETTNEMPLYRINFO L ON A.EMPL_NO = L.EMPLYR_ID
+		WHERE 
+			A.VC_ID = #{vcId}	
+	</select>
+	
+	<insert id="insertYearVacation" parameterType="egovframework.omcst.vacation.year.service.YearVacationVO">
+		INSERT INTO OM_VACATION (	/* YearVacationDAO.insertYearVacation */
+			EMPL_NO
+			, VC_TYPE
+			, VC_BGNDE
+			, VC_ENDDE
+			, VC_DAY_CNT
+			, VC_STATUS
+			, FRST_REGISTER_ID, FRST_REGIST_PNTTM, LAST_UPDUSR_ID, LAST_UPDT_PNTTM
+		) VALUES(
+			#{emplNo}
+			, #{vcType}
+			, REPLACE(#{vcBgnde}, '-', '')
+			, REPLACE(#{vcEndde}, '-', '')
+			, #{vcDayCnt}
+			, #{vcStatus} 
+			, #{frstRegisterId}, now(), #{frstRegisterId}, now() 
+		)
+	
+	</insert>
+	
+	<update id="updateYearVacation">
+		UPDATE OM_VACATION	/* YearVacationDAO.updateYearVacation */
+			SET VC_STATUS = #{vcStatus}
+		WHERE 
+			VC_ID = #{vcId}
+	</update>
+	
+	
+	<update id="deleteYearVacation">
+		DELETE	/* YearVacationDAO.deleteYearVacation */ 
+		FROM OM_VACATION
+		WHERE 
+			VC_STATUS IN ('VC01','VC02')
+			AND VC_ID = #{vcId}	
+	</update>
+	
+	<select id="selectUseDayCnt" parameterType="egovframework.omcst.vacation.year.service.YearVacationVO" resultType="java.lang.Integer">
+		SELECT /* YearVacationDAO.selectUseDayCnt */ 
+		    IFNULL(SUM(VC_DAY_CNT), 0) as USE_DAY_CNT
+		FROM
+		    OM_VACATION
+		WHERE EMPL_NO = #{userId}
+		AND YEAR(VC_BGNDE) = YEAR(NOW())
+	</select>
+	
+	<select id="selectTotalDayCnt" parameterType="egovframework.omcst.vacation.year.service.YearVacationVO" resultType="java.lang.Integer">
+		SELECT /* YearVacationDAO.selectTotalDayCnt */ 
+		    MV_DAY
+		FROM
+		    OM_YEARMEMVACATION
+		WHERE
+		    EMPL_NO = #{userId} 
+		AND YEAR = YEAR(NOW())
+	</select>
+
+
+
+</mapper>

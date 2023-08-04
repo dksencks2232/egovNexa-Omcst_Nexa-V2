@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CommonDAO">
+	<select id="selectCommonCode" parameterType="egovframework.omcst.common.vo.CommonVO" resultType="egovMap">
+			SELECT 	 A.CODE_ID /* CommonDAO.selectCommonCode */
+			 		,A.CODE
+			 		,A.CODE_NM
+			 FROM  	OMCST.LETTCCMMNDETAILCODE A
+			 LEFT OUTER JOIN 	
+			 		OMCST.LETTCCMMNCODE B
+			 ON 	A.CODE_ID = B.CODE_ID
+			 WHERE 	B.USE_AT = 'Y'
+			 AND	A.USE_AT = 'Y'
+			<if test=" clCode != null and clCode != '' ">
+				AND B.CL_CODE = #{clCode}
+			</if>	 
+			<if test=" codeId != null and codeId != '' ">
+				AND B.CODE_ID = #{codeId}
+			</if>			
+	        
+	        UNION ALL
+	        
+	        SELECT 	 '' AS CODE_ID
+	        		,#{codeType} AS CODE
+	        		,CASE WHEN 	#{codeType} = '' 	THEN ''
+	        	  	 	  WHEN 	#{codeType} = 'SEL' THEN '선택'
+	        	  	 	  WHEN 	#{codeType} = 'ALL' THEN '전체'
+	        	  	 	  ELSE 	''
+	        	  	 	  END 	CODE_NM
+	        FROM DUAL
+	        
+	        ORDER BY CODE_ID	  		
+	</select>			
+</mapper>

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="groupManageDAO">
+
+
+	<resultMap id="group" type="egovframework.let.sec.gmt.service.GroupManageVO">
+        <result property="groupId" column="GROUP_ID"/>
+		<result property="groupNm" column="GROUP_NM"/>
+		<result property="groupDc" column="GROUP_DC"/>
+        <result property="groupCreatDe" column="GROUP_CREAT_DE"/>
+	</resultMap>
+
+    <select id="selectGroup" parameterType="egovframework.let.sec.gmt.service.GroupManageVO" resultMap="group">
+            SELECT /*groupManageDAO.selectGroup*/
+            	  GROUP_ID
+            	, GROUP_NM
+            	, GROUP_DC
+            	, GROUP_CREAT_DE
+            FROM 
+            	LETTNAUTHORGROUPINFO 
+            WHERE 
+            	GROUP_ID=#{groupId}
+        
+    </select>
+
+    <select id="selectGroupList" parameterType="egovframework.let.sec.gmt.service.GroupManageVO" resultMap="group">
+            SELECT /*groupManageDAO.selectGroupList*/
+            	  GROUP_ID
+            	, GROUP_NM
+            	, GROUP_DC
+            	, GROUP_CREAT_DE
+              FROM 
+              	LETTNAUTHORGROUPINFO
+             WHERE 
+             	1=1
+            <if test='searchCondition == "1"'>
+                AND (
+                	   GROUP_ID LIKE CONCAT('%' , #{searchKeyword}, '%')
+                	OR GROUP_NM LIKE CONCAT('%' , #{searchKeyword}, '%')
+                	OR GROUP_DC LIKE CONCAT('%' , #{searchKeyword}, '%')
+                )
+            </if>
+            ORDER BY 
+            	GROUP_CREAT_DE DESC
+            LIMIT #{recordCountPerPage} 
+            OFFSET #{firstIndex}
+    </select>
+    
+    <select id="selectJpGroupTotRecords" parameterType="egovframework.let.sec.gmt.service.GroupManageVO" resultType="int">
+			SELECT /*groupManageDAO.selectJpGroupTotRecords*/
+				COUNT(*) totcnt
+			FROM 
+				LETTNAUTHORGROUPINFO
+			WHERE 1=1
+			<choose>
+             	<when test="searchCnd != null and searchCnd != '' ">
+             		AND ${searchCnd} LIKE CONCAT ('%', #{searchWrd},'%')
+             	</when>	
+             	<otherwise>
+             		<if test =" searchWrd != null and searchWrd !='' ">
+						AND( GROUP_ID LIKE CONCAT ('%', #{searchWrd},'%')
+							OR GROUP_NM LIKE CONCAT ('%', #{searchWrd},'%')
+							OR GROUP_DC LIKE CONCAT ('%', #{searchWrd},'%')	)             		
+             		</if>
+             	</otherwise>
+             </choose>
+	</select>
+    
+   	<select id="selectJqGroupList" parameterType="egovframework.let.sec.gmt.service.GroupManageVO" resultMap="group">
+            SELECT /*groupManageDAO.selectJqGroupList*/
+            	  GROUP_ID
+            	, GROUP_NM
+            	, GROUP_DC
+            	, GROUP_CREAT_DE
+              FROM 
+              	LETTNAUTHORGROUPINFO
+             WHERE 
+             	1=1
+             <choose>
+             	<when test="searchCnd != null and searchCnd != '' ">
+             		AND ${searchCnd} LIKE CONCAT ('%', #{searchWrd},'%')
+             	</when>	
+             	<otherwise>
+             		<if test =" searchWrd != null and searchWrd !='' ">
+						AND( GROUP_ID LIKE CONCAT ('%', #{searchWrd},'%')
+							OR GROUP_NM LIKE CONCAT ('%', #{searchWrd},'%')
+							OR GROUP_DC LIKE CONCAT ('%', #{searchWrd},'%')	)             		
+             		</if>
+             	</otherwise>
+             </choose>
+            ORDER BY 
+            <if test= 'sidx == "groupId" '>
+            	GROUP_ID ${sord}
+            </if>
+            <if test= 'sidx == "groupNm" '>
+            	GROUP_NM ${sord}
+            </if>
+            <if test= 'sidx == "groupDc" '>
+            	GROUP_DC ${sord}
+            </if>
+            <if test= 'sidx == "groupCreatDe" '>
+            	GROUP_CREAT_DE ${sord}
+            </if>
+            LIMIT #{rows} 
+            OFFSET #{firstIndex}
+    </select>
+
+	<insert id="insertGroup">
+			INSERT /*groupManageDAO.insertGroup*/
+			INTO LETTNAUTHORGROUPINFO 
+				  ( GROUP_ID
+				  , GROUP_NM
+				  , GROUP_DC
+				  , GROUP_CREAT_DE )
+		   VALUES ( #{groupId}
+			      , #{groupNm}
+				  , #{groupDc}
+				  , now())
+		
+	</insert>
+	
+	<update id="updateGroup" parameterType="egovframework.let.sec.gmt.service.GroupManage">
+			UPDATE /*groupManageDAO.updateGroup*/
+				LETTNAUTHORGROUPINFO 
+			SET 
+				   GROUP_NM=#{groupNm}
+				 , GROUP_DC=#{groupDc}
+				 , GROUP_CREAT_DE=now()
+		  	WHERE 
+		  		GROUP_ID=#{groupId}
+		
+	</update>
+	
+	<delete id="deleteGroup">
+			DELETE /*groupManageDAO.deleteGroup*/
+			FROM 
+				LETTNAUTHORGROUPINFO 
+			 WHERE 
+			 	GROUP_ID=#{groupId}
+		
+	</delete>
+	
+	<select id="selectGroupListTotCnt" parameterType="egovframework.let.sec.gmt.service.GroupManageVO" resultType="int">
+			SELECT /*groupManageDAO.selectGroupListTotCnt*/
+				COUNT(*) totcnt
+			FROM 
+				LETTNAUTHORGROUPINFO
+			WHERE 1=1
+			<if test='searchCondition == "1"'>AND
+				GROUP_NM LIKE CONCAT('%' , #{searchKeyword}, '%')
+			</if>
+	</select>
+	
+	<update id="updateJqGroup" parameterType="hashMap">
+			UPDATE /*groupManageDAO.updateJqGroup*/
+				LETTNAUTHORGROUPINFO 
+			<set> 
+				<if test='cellName == "groupNm"'>
+					GROUP_NM=#{cellValue}
+				</if>
+				<if test='cellName == "groupDc"'>	   
+					GROUP_DC=#{cellValue}
+				</if>
+			</set>
+		  	WHERE 
+		  		GROUP_ID=#{id}
+		
+	</update>
+	
+	<select id="selectLastGroupId" resultType="String">
+		SELECT /*groupManageDAO.selectLastGroupId*/
+		    GROUP_ID
+		FROM
+		    LETTNAUTHORGROUPINFO
+		ORDER BY GROUP_ID DESC
+		LIMIT 1
+	</select>
+</mapper>

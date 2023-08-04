@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ProjectDAO">
+
+
+	<select id="selectListProject" parameterType="egovframework.omcst.business.project.service.ProjectVO" resultType="egovframework.omcst.business.project.service.ProjectVO">
+		SELECT 
+			B.CLIENT_NM,
+		    B.CLIENT_SIDE_DEPARTMENT,
+		    B.CLIENT_SIDE_MANAGER,
+		    A.PROJECT_NM,
+		    A.PROJECT_BEGINE_DATE,
+		    A.PROJECT_END_DATE,
+		    (SELECT D.USER_NM 
+		     FROM om_projectstaffinfo C join lettnemplyrinfo D on C.ESNTL_ID = D.ESNTL_ID
+		     WHERE C.PROJECT_NO = A.PROJECT_NO AND C.PROJECT_LEADER_YN = 'Y'
+		     ) AS PROJECT_LEADER,
+		     (SELECT count(*)
+		     FROM om_projectstaffinfo C join om_projectinfo D 
+		     WHERE C.PROJECT_NO = D.PROJECT_NO and D.PROJECT_NO = A.PROJECT_NO
+		     ) AS PROJECT_STAFF_CNT,
+		     (CASE
+				WHEN A.PROJECT_BEGINE_DATE > now() THEN "예정"
+		        WHEN now() > A.PROJECT_END_DATE  THEN "종료"
+		        ELSE "진행중"
+			  END) AS PROJECT_STATUS
+					
+		FROM om_projectinfo A left join om_clientinfo B
+		on A.CLIENT_NO = B.CLIENT_NO 
+		and A.DEPARTMENT_NO = B.DEPARTMENT_NO 
+		WHERE 1 = 1
+ 			<if test="clientNo != 0"> AND 
+				B.CLIENT_NO = #{clientNo}
+			</if> 
+			<if test="departmentNo != null and departmentNo != 0"> AND 
+				B.DEPARTMENT_NO = #{departmentNo}
+			</if>
+ 			<if test="projectNo != 0"> AND 
+				A.PROJECT_NO = #{projectNo}
+			</if>
+			<if test="searchKeyword != null and searchKeyword != ''"> AND
+				CONCAT(binary(B.CLIENT_NM), binary(B.CLIENT_SIDE_DEPARTMENT), binary(A.PROJECT_NM)) like CONCAT('%' , #{searchKeyword}, '%') 
+			</if>
+			<if test="projectStatus != null and projectStatus != ''"> AND 
+				<if test="projectStatus == 'PGST01'">
+					A.PROJECT_BEGINE_DATE > now()
+				</if>
+				<if test="projectStatus == 'PGST02'">
+					now() BETWEEN A.PROJECT_BEGINE_DATE AND A.PROJECT_END_DATE
+				</if>
+				<if test="projectStatus == 'PGST03'">
+					now() > A.PROJECT_END_DATE 
+				</if>
+			</if>
+			<if test="projectBegineDate != null and projectBegineDate != ''"> AND 
+				(
+					#{projectBegineDate} BETWEEN A.PROJECT_BEGINE_DATE AND A.PROJECT_END_DATE OR
+					#{projectEndDate} BETWEEN A.PROJECT_BEGINE_DATE AND A.PROJECT_END_DATE OR
+					A.PROJECT_BEGINE_DATE BETWEEN #{projectBegineDate} AND #{projectEndDate} OR
+					A.PROJECT_END_DATE BETWEEN #{projectBegineDate} AND #{projectEndDate}
+				)
+			</if>
+		LIMIT #{recordCountPerPage} 
+        OFFSET #{firstIndex};
+	</select>
+	
+	<select id="selectListclient" parameterType="egovframework.omcst.business.project.service.ProjectVO" resultType="egovframework.omcst.business.project.service.ProjectVO">
+		SELECT 
+			distinct(CLIENT_NO) as CLIENT_NO,
+			CLIENT_NM
+		FROM
+			om_clientinfo;
+	</select>
+	
+	
+	<select id="SearchSelectBoxInfo" parameterType="egovframework.omcst.business.project.service.ProjectVO" resultType="egovframework.omcst.business.project.service.ProjectVO">
+		
+			<if test='searchCondition == "0"'>
+				SELECT
+					CLIENT_SIDE_DEPARTMENT,
+					DEPARTMENT_NO
+				FROM
+					om_clientinfo
+				WHERE
+					CLIENT_NO = #{clientNo};
+			</if>
+			<if test='searchCondition == "1"'>
+				SELECT
+					B.PROJECT_NO,
+					B.PROJECT_NM
+				FROM
+					om_clientinfo A join om_projectinfo B
+				WHERE A.CLIENT_NO = B.CLIENT_NO
+					AND A.CLIENT_NO = #{clientNo}
+					AND A.DEPARTMENT_NO = #{departmentNo};
+			</if>
+	</select>
+	
+	<select id="selectListProjectTotCnt" parameterType="egovframework.omcst.business.project.service.ProjectVO" resultType="int">
+		SELECT 
+			COUNT(*) AS totcnt		
+					
+		FROM om_projectinfo A left join om_clientinfo B
+		on A.CLIENT_NO = B.CLIENT_NO 
+		and A.DEPARTMENT_NO = B.DEPARTMENT_NO 
+		WHERE 1 = 1
+ 			<if test="clientNo != 0"> AND 
+				B.CLIENT_NO = #{clientNo}
+			</if> 
+			<if test="departmentNo != null and departmentNo != 0"> AND 
+				B.DEPARTMENT_NO = #{departmentNo}
+			</if>
+ 			<if test="projectNo != 0"> AND 
+				A.PROJECT_NO = #{projectNo}
+			</if>
+			<if test="searchKeyword != null and searchKeyword != ''"> AND
+				CONCAT(binary(B.CLIENT_NM), binary(B.CLIENT_SIDE_DEPARTMENT), binary(A.PROJECT_NM)) like CONCAT('%' , #{searchKeyword}, '%') 
+			</if>
+			<if test="projectStatus != null and projectStatus != ''"> AND 
+				<if test="projectStatus == 'PGST01'">
+					A.PROJECT_BEGINE_DATE > now()
+				</if>
+				<if test="projectStatus == 'PGST02'">
+					now() BETWEEN A.PROJECT_BEGINE_DATE AND A.PROJECT_END_DATE
+				</if>
+				<if test="projectStatus == 'PGST03'">
+					now() > A.PROJECT_END_DATE 
+				</if>
+			</if>
+			<if test="projectBegineDate != null and projectBegineDate != ''"> AND 
+				(
+					#{projectBegineDate} BETWEEN A.PROJECT_BEGINE_DATE AND A.PROJECT_END_DATE OR
+					#{projectEndDate} BETWEEN A.PROJECT_BEGINE_DATE AND A.PROJECT_END_DATE OR
+					A.PROJECT_BEGINE_DATE BETWEEN #{projectBegineDate} AND #{projectEndDate} OR
+					A.PROJECT_END_DATE BETWEEN #{projectBegineDate} AND #{projectEndDate}
+				)
+			</if>
+			;
+	</select>
+	
+	
+
+</mapper>

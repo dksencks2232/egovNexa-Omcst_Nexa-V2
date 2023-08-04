@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="attendanceDAO">
+
+    <select id="searchEsntlId" parameterType="String" resultType="String">
+        SELECT /* AttendanceDAO.searchEsntlId */
+               esntl_id
+          FROM omcst.lettnemplyrinfo
+         WHERE EMPLYR_ID = #{loginId}
+    </select> 
+          
+    <select id="searchAttId" parameterType="egovframework.omcst.attendance.vo.AttendanceVO" resultType="String">
+		SELECT /* AttendanceDAO.searchAttId */
+			   att_id     
+          FROM omcst.attendanceinfo
+         WHERE ESNTL_ID = #{esntl_id} 
+           AND ATT_DATE = #{attDate}
+    </select>       
+    
+    <select id="searchAttInfo" parameterType="String" resultType="egovframework.omcst.attendance.vo.AttendanceVO">
+        SELECT /* AttendanceDAO.searchAttInfo */
+               att_id
+             , DATE_FORMAT(ATT_DATE, '%Y-%m-%d %H:%i:%s') AS attDate
+             , DATE_FORMAT(LAT_DATE, '%Y-%m-%d %H:%i:%s') AS latDate
+             , status             
+          FROM omcst.attendanceinfo
+         WHERE ESNTL_ID  = #{esntl_id}
+ <![CDATA[ AND ATT_DATE >= CONCAT(CURDATE(), ' 08:20:00') ]]>
+           
+    </select>
+    
+	<insert id="attendanceCheck" parameterType="egovframework.omcst.attendance.vo.AttendanceVO">		
+	    INSERT /* AttendanceDAO.attendanceCheck */     
+	      INTO omcst.attendanceinfo
+	         ( ESNTL_ID
+	         , ATT_DATE
+	         , STATUS
+	         ) 
+	    VALUES  
+	         ( #{esntl_id}
+	         , NOW()
+	         , '1'
+	         )               
+	</insert>
+	
+	<update id="attendanceCheck2" parameterType="egovframework.omcst.attendance.vo.AttendanceVO">		
+		UPDATE /* AttendanceDAO.attendanceCheck */
+		       omcst.attendanceinfo
+		   SET LAT_DATE = NOW()
+		     , STATUS   = '2' 
+		 WHERE ATT_ID   = #{att_id}
+		   AND ESNTL_ID = #{esntl_id}
+	</update>	
+
+</mapper>

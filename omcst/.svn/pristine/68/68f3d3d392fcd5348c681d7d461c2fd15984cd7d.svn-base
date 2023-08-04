@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ClientDAO">
+
+	<select id="selectClientList" parameterType="egovframework.omcst.business.client.service.ClientVO" resultType="egovframework.omcst.business.client.service.ClientVO">
+		SELECT 	  CLIENT_NM
+				 ,CLIENT_SIDE_DEPARTMENT
+				 ,CLIENT_SIDE_MANAGER
+				 ,COUNT(*) OVER(PARTITION BY 1) AS TOT_CNT 
+		FROM 	 OMCST.OM_CLIENTINFO
+		WHERE 	 1=1
+		<if test=" searchKeyword != null and searchKeyword != '' ">
+			AND CONCAT(binary(CLIENT_NM), binary(CLIENT_SIDE_DEPARTMENT), binary(CLIENT_SIDE_MANAGER)) like CONCAT('%' , #{searchKeyword}, '%')
+		</if>		
+		ORDER BY CLIENT_NO,DEPARTMENT_NO
+		LIMIT #{recordCountPerPage} 
+        OFFSET #{firstIndex};		
+	</select>
+
+	<select id="selectClientBoxInfo" parameterType="String" resultType="egovframework.omcst.business.client.service.ClientVO">
+		SELECT 	 DISTINCT(CLIENT_NO) AS CLIENT_NO
+				,CLIENT_NM
+		FROM 	 OMCST.OM_CLIENTINFO	
+		ORDER BY CLIENT_NO
+	</select>
+	
+	<insert id="insertClientData" parameterType="egovframework.omcst.business.client.service.ClientVO">
+		INSERT INTO OMCST.OM_CLIENTINFO 
+		(
+			 CLIENT_NM
+			,CLIENT_SIDE_DEPARTMENT
+			,CLIENT_SIDE_MANAGER
+			,REMARK
+			,REG_TM
+			,UPDT_TM
+			,DEPARTMENT_NO
+		) 
+		VALUES 
+		(
+			 #{clientNm}
+			,#{clientSideDepartment}
+			,#{clientSideManager}
+			,#{remark}
+			,now()
+			,now()
+			,'1'
+		)
+	</insert>
+	<insert id="insertDepartmentData" parameterType="egovframework.omcst.business.client.service.ClientVO">
+		INSERT INTO OMCST.OM_CLIENTINFO 
+		( 
+			 CLIENT_NO 
+			,CLIENT_NM 
+			,CLIENT_SIDE_DEPARTMENT 
+			,CLIENT_SIDE_MANAGER 
+			,REMARK 
+			,REG_TM 
+			,UPDT_TM 
+			,DEPARTMENT_NO 
+		) 
+		SELECT	 
+			 #{clientNo} 				AS CLIENT_NO
+		    ,#{clientNm} 				AS CLIENT_NM
+		    ,#{clientSideDepartment} 	AS CLIENT_SIDE_DEPARTMENT
+		    ,#{clientSideManager} 		AS CLIENT_SIDE_MANAGER
+		    ,#{remark} 					AS REMARK
+		    ,now() 						AS REG_TM
+		    ,now() 						AS UPDT_TM
+			,MAX(department_no)+1 		AS DEPARTMENT_NO 
+		FROM OM_CLIENTINFO 
+		WHERE CLIENT_NO = #{clientNo}	
+	</insert>		
+		
+</mapper>
